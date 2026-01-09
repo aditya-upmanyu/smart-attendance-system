@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student - Smart Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .camera-section {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .camera-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 500px;
+            margin: 20px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .video-container.active {
+            display: block;
+        }
+
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 80%;
+            border: 3px solid #4CAF50;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .capture-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .capture-status.active {
+            display: block;
+        }
+
+        .tips-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .tips-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .tips-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips-box li {
+            color: #856404;
+            padding: 5px 0;
+            font-size: 13px;
+        }
+
+        .tips-box li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-test-camera {
+            background: #17a2b8;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-test-camera:hover {
+            background: #138496;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.active {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .face-detected {
+            display: none;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: fadeIn 0.5s;
+        }
+
+        .face-detected.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>➕ Add New Student</h1>
+            <p>{{ class_name }} ({{ class_id }})</p>
+        </div>
+
+        <div class="form-container">
+            <div id="alertBox" class="alert"></div>
+
+            <form id="addStudentForm">
+                <input type="hidden" name="class_id" value="{{ class_id }}">
+
+                <div class="form-group">
+                    <label>Student ID <span class="required">*</span></label>
+                    <input type="text" name="student_id" id="studentId" required 
+                           placeholder="e.g., 2210001" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" name="name" id="studentName" required 
+                           placeholder="e.g., John Doe" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Roll Number <span class="required">*</span></label>
+                    <input type="text" name="roll_no" id="rollNo" required 
+                           placeholder="e.g., 001" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address (Optional)</label>
+                    <input type="email" name="email" id="email" 
+                           placeholder="e.g., john@example.com" autocomplete="off">
+                </div>
+
+                <div class="camera-section">
+                    <h3>📷 Face Capture Required</h3>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        We need to capture your face for attendance recognition
+                    </p>
+
+                    <button type="button" id="testCameraBtn" class="btn btn-test-camera">
+                        📹 Test Camera
+                    </button>
+
+                    <div class="video-container" id="videoContainer">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas"></canvas>
+                        <div class="camera-overlay"></div>
+                        <div id="captureStatus" class="capture-status">
+                            Initializing camera...
+                        </div>
+                    </div>
+
+                    <div id="faceDetected" class="face-detected">
+                        ✓ Face detected! Ready to capture
+                    </div>
+
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h4>📸 Tips for Best Results:</h4>
+                        <ul>
+                            <li>Ensure good lighting (face should be well-lit)</li>
+                            <li>Look directly at the camera</li>
+                            <li>Remove glasses if possible</li>
+                            <li>Keep your face centered in the oval</li>
+                            <li>Stay still during capture</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        <span id="btnText">📸 Capture Face & Add Student</span>
+                        <span id="btnSpinner" class="spinner" style="display: none;"></span>
+                    </button>
+                    <a href="/manage_class/{{ class_id }}" class="btn btn-secondary">
+                        ❌ Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let stream = null;
+        let cameraActive = false;
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} active`;
+
+            // Auto hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertBox.classList.remove('active');
+                }, 5000);
+            }
+        }
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                document.getElementById('captureStatus').textContent = 'Requesting camera access...';
+                document.getElementById('captureStatus').classList.add('active');
+
+                // Request camera with specific constraints
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                // Wait for video to be ready
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+
+                cameraActive = true;
+                document.getElementById('videoContainer').classList.add('active');
+                document.getElementById('captureStatus').textContent = '✓ Camera ready! Position your face in the oval';
+
+                showAlert('Camera activated successfully! Position your face and submit the form.', 'success');
+
+                return true;
+            } catch (error) {
+                console.error('Camera error:', error);
+                let errorMsg = 'Camera access denied. ';
+
+                if (error.name === 'NotAllowedError') {
+                    errorMsg += 'Please allow camera access in your browser settings.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg += 'No camera found on this device.';
+                } else {
+                    errorMsg += error.message;
+                }
+
+                showAlert(errorMsg, 'error');
+                document.getElementById('captureStatus').textContent = '❌ Camera failed to start';
+                return false;
+            }
+        }
+
+        // Stop camera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                cameraActive = false;
+                document.getElementById('videoContainer').classList.remove('active');
+                document.getElementById('captureStatus').classList.remove('active');
+            }
+        }
+
+        // Capture frame from video
+        function captureFrame() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        // Test camera button
+        document.getElementById('testCameraBtn').addEventListener('click', async function() {
+            if (cameraActive) {
+                stopCamera();
+                this.textContent = '📹 Test Camera';
+                showAlert('Camera stopped', 'info');
+            } else {
+                this.textContent = '⏹️ Stop Camera';
+                await initCamera();
+            }
+        });
+
+        // Form submission
+        document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+
+            // Validate form
+            const studentId = document.getElementById('studentId').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            const rollNo = document.getElementById('rollNo').value.trim();
+
+            if (!studentId || !studentName || !rollNo) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Start camera if not active
+            if (!cameraActive) {
+                showAlert('Starting camera for face capture...', 'info');
+                const cameraReady = await initCamera();
+                if (!cameraReady) {
+                    showAlert('Cannot proceed without camera access', 'error');
+                    return;
+                }
+
+                // Give user time to position
+                showAlert('Camera ready! Please position your face and click submit again.', 'info');
+                return;
+            }
+
+            // Disable form during submission
+            submitBtn.disabled = true;
+            btnText.textContent = 'Processing...';
+            btnSpinner.style.display = 'inline-block';
+            progressContainer.classList.add('active');
+
+            try {
+                // Simulate progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 5;
+                    progressBar.style.width = progress + '%';
+                    if (progress >= 90) clearInterval(progressInterval);
+                }, 100);
+
+                // Prepare form data
+                const formData = new FormData(this);
+
+                // Submit to server
+                const response = await fetch('/add_student', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showAlert('✓ ' + result.message, 'success');
+
+                    // Stop camera
+                    stopCamera();
+
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/manage_class/{{ class_id }}';
+                    }, 2000);
+                } else {
+                    showAlert('❌ ' + (result.message || 'Failed to add student'), 'error');
+                    submitBtn.disabled = false;
+                    btnText.textContent = '📸 Capture Face & Add Student';
+                    btnSpinner.style.display = 'none';
+                    progressContainer.classList.remove('active');
+                    progressBar.style.width = '0%';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('❌ Network error. Please check your connection and try again.', 'error');
+                submitBtn.disabled = false;
+                btnText.textContent = '📸 Capture Face & Add Student';
+                btnSpinner.style.display = 'none';
+                progressContainer.classList.remove('active');
+                progressBar.style.width = '0%';
+            }
+        });
+
+        // Clean up camera on page unload
+        window.addEventListener('beforeunload', function() {
+            stopCamera();
+        });
+
+        // Auto-start camera info
+        setTimeout(() => {
+            showAlert('Click "Test Camera" to verify your camera is working before submitting.', 'info');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Attendance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .info-card {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #1976d2;
+        }
+        .students-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        .student-info {
+            flex: 1;
+        }
+        .student-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .student-id {
+            font-size: 14px;
+            color: #666;
+        }
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .badge-present { background: #e8f5e9; color: #2e7d32; }
+        .badge-absent { background: #ffebee; color: #c62828; }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>✏️ Manual Attendance - {{ class_id }}</h1>
+        <a href="/dashboard"><button class="btn btn-primary">← Dashboard</button></a>
+    </nav>
+
+    <div class="container">
+        <div class="info-card">
+            <strong>📝 Manual Attendance Correction</strong><br>
+            Use this page to manually mark or correct attendance. All changes are logged with your username.
+        </div>
+
+        <div class="students-list">
+            <h3 style="margin-bottom: 20px;">Student List - Today's Status</h3>
+            {% for student in students %}
+            <div class="student-item">
+                <div class="student-info">
+                    <div class="student-name">{{ student.name }}</div>
+                    <div class="student-id">{{ student.roll_no }} • {{ student.id }}</div>
+                </div>
+                {% if student.status == "Present" %}
+                    <span class="status-badge badge-present">✓ Present</span>
+                    {% if student.manual %}
+                    <span style="font-size: 12px; color: #999;">(Manual)</span>
+                    {% endif %}
+                    <button class="btn btn-danger" onclick="markAbsent('{{ student.id }}', '{{ student.name }}')">
+                        Mark Absent
+                    </button>
+                {% else %}
+                    <span class="status-badge badge-absent">✗ Absent</span>
+                    <button class="btn btn-primary" onclick="markPresent('{{ student.id }}', '{{ student.name }}')">
+                        Mark Present
+                    </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Reason Modal -->
+    <div id="reasonModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">Attendance Correction</h3>
+            <form id="attendanceForm">
+                <input type="hidden" id="studentId" name="student_id">
+                <input type="hidden" id="action" name="action">
+
+                <div class="form-group">
+                    <label>Student: <strong id="studentName"></strong></label>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Reason for correction *</label>
+                    <textarea id="reason" name="reason" rows="3" required 
+                              placeholder="E.g., Late entry, Medical leave, Technical issue..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Confirm</button>
+                    <button type="button" class="btn btn-danger" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function markPresent(studentId, studentName) {
+            document.getElementById('studentId').value = studentId;
+            document.getElementById('studentName').textContent = studentName;
+            document.getElementById('action').value = 'mark_present';
+            document.getElementById('reasonModal').style.display = 'block';
+        }
+
+        function markAbsent(studentId, studentName) {
+            if (confirm(`Mark ${studentName} as absent?`)) {
+                submitAttendance(studentId, 'mark_absent', 'Marked absent manually');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('reasonModal').style.display = 'none';
+            document.getElementById('attendanceForm').reset();
+        }
+
+        document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            await submitAttendance(
+                formData.get('student_id'),
+                formData.get('action'),
+                formData.get('reason')
+            );
+            closeModal();
+        });
+
+        async function submitAttendance(studentId, action, reason) {
+            try {
+                const formData = new FormData();
+                formData.append('student_id', studentId);
+                formData.append('action', action);
+                formData.append('reason', reason);
+
+                const response = await fetch('/manual_attendance/{{ class_id }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert('Attendance updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error updating attendance');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

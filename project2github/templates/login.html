@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GLA Portal Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#1d3f5e] h-screen flex items-center justify-center">
+    <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-[#f16522]">
+        <div class="text-center mb-8">
+            <img src="https://www.gla.ac.in/images/gla-logo.png" class="h-16 mx-auto mb-4">
+            <h1 class="text-2xl font-bold text-gray-800">Teacher Login</h1>
+            <p class="text-gray-500">Access your assigned classrooms</p>
+        </div>
+        <form action="/login" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Faculty ID</label>
+                <input type="text" name="username" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#1d3f5e] outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#1d3f5e] outline-none">
+            </div>
+            <button type="submit" class="w-full bg-[#f16522] text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition">
+                SECURE LOGIN
+            </button>
+        </form>
+    </div>
+</body>
+</html>

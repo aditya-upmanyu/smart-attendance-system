@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        .qr-section {
+            text-align: center;
+        }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+        .info-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .info-item {
+            margin-bottom: 15px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .attendance-history {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .badge-danger {
+            background: #ffebee;
+            color: #c62828;
+        }
+        @media (max-width: 768px) {
+            .profile-card {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>🎓 Student Portal</h1>
+        <a href="/logout"><button style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Logout</button></a>
+    </nav>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="qr-section">
+                <h3>Your QR Code</h3>
+                <img src="data:image/png;base64,{{ qr_code }}" class="qr-code" alt="Student QR Code">
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">Use for quick attendance</p>
+            </div>
+            <div class="info-section">
+                <h2>{{ student.name }}</h2>
+                <div class="info-item">
+                    <span class="info-label">Student ID:</span> {{ student_id }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Roll No:</span> {{ student.roll_no }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Class:</span> {{ student.class_id }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span> {{ student.email }}
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ attendance_percentage }}%</div>
+                <div class="stat-label">Overall Attendance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ present_days }}</div>
+                <div class="stat-label">Days Present</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_days - present_days }}</div>
+                <div class="stat-label">Days Absent</div>
+            </div>
+        </div>
+
+        <div class="attendance-history">
+            <h3 style="margin-bottom: 15px;">Attendance History (Last 30 Days)</h3>
+            {% for record in attendance_history[:10] %}
+            <div class="history-item">
+                <div>
+                    <strong>{{ record.date }}</strong>
+                    <span style="color: #999; margin-left: 10px;">{{ record.time }}</span>
+                </div>
+                {% if record.status == "Present" %}
+                <span class="badge badge-success">{{ record.status }}</span>
+                {% else %}
+                <span class="badge badge-danger">{{ record.status }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

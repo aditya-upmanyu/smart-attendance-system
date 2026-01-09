@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .ai-insights {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .ai-insights h2 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .insight-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .room-analytics {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-optimal { background: #e8f5e9; color: #2e7d32; }
+        .status-underutilized { background: #fff3e0; color: #e65100; }
+        .status-overcrowded { background: #ffebee; color: #c62828; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>📊 AI Analytics Dashboard</h1>
+        <a href="/dashboard"><button style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">← Dashboard</button></a>
+    </nav>
+
+    <div class="container">
+        <div class="ai-insights">
+            <h2>🤖 AI-Powered Insights by Gemini</h2>
+            <div id="ai-content" class="loading">
+                Loading AI insights...
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Attendance Trends</h3>
+                <canvas id="attendanceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Class-wise Performance</h3>
+                <canvas id="classChart"></canvas>
+            </div>
+        </div>
+
+        <div class="room-analytics">
+            <h3>Room Utilization Analytics</h3>
+            <div id="roomAnalytics" class="loading">
+                Loading room analytics...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadAIInsights() {
+            try {
+                // Get first available class for demo
+                const response = await fetch('/api/room-analytics');
+                const data = await response.json();
+
+                if (data.rooms && data.rooms.length > 0) {
+                    const classId = data.rooms[0].class_id;
+                    const aiResponse = await fetch(`/api/ai-insights/${classId}`);
+                    const aiData = await aiResponse.json();
+
+                    if (aiData.status === 'success') {
+                        document.getElementById('ai-content').innerHTML = `
+                            <div class="insights-grid">
+                                <div class="insight-card">
+                                    <h4>📈 AI Analysis</h4>
+                                    <p>${aiData.insights.replace(/
+/g, '<br>')}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('ai-content').innerHTML = 
+                    '<p>AI insights temporarily unavailable. Analytics data shown below.</p>';
+            }
+        }
+
+        async function loadRoomAnalytics() {
+            try {
+                const response = await fetch('/api/room-analytics');
+                const data = await response.json();
+
+                if (data.rooms && data.rooms.length > 0) {
+                    let tableHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Capacity</th>
+                                    <th>Present</th>
+                                    <th>Utilization</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.rooms.forEach(room => {
+                        const statusClass = `status-${room.status.toLowerCase().replace(' ', '-')}`;
+                        tableHTML += `
+                            <tr>
+                                <td><strong>${room.class_name}</strong></td>
+                                <td>${room.capacity}</td>
+                                <td>${room.present}</td>
+                                <td>${room.utilization}%</td>
+                                <td><span class="status-badge ${statusClass}">${room.status}</span></td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `</tbody></table>
+                        <p style="margin-top: 15px; color: #666;">
+                            <strong>Average Utilization:</strong> ${data.summary.avg_utilization}%
+                        </p>
+                    `;
+
+                    document.getElementById('roomAnalytics').innerHTML = tableHTML;
+
+                    // Create charts
+                    createCharts(data.rooms);
+                }
+            } catch (error) {
+                document.getElementById('roomAnalytics').innerHTML = 
+                    '<p style="color: #c62828;">Error loading analytics data</p>';
+            }
+        }
+
+        function createCharts(rooms) {
+            // Attendance Chart
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            new Chart(attendanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: rooms.map(r => r.class_id),
+                    datasets: [{
+                        label: 'Attendance Rate (%)',
+                        data: rooms.map(r => r.utilization),
+                        backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Class Performance Chart
+            const classCtx = document.getElementById('classChart').getContext('2d');
+            new Chart(classCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: rooms.map(r => r.class_id),
+                    datasets: [{
+                        data: rooms.map(r => r.present),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAIInsights();
+            loadRoomAnalytics();
+        });
+    </script>
+</body>
+</html>
