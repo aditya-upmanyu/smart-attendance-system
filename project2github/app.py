@@ -7,7 +7,14 @@ Ready for deployment on Render/Railway
 import os
 import cv2
 import numpy as np
-import face_recognition
+try:
+    import face_recognition
+    FACE_RECOGNITION_AVAILABLE = True
+except ImportError:
+    FACE_RECOGNITION_AVAILABLE = False
+    import logging
+    logging.warning("⚠️ face_recognition not available - using fallback mode")
+
 from flask import Flask, render_template, request, redirect, url_for, Response, jsonify, session, send_file
 from flask_socketio import SocketIO, emit
 import firebase_admin
